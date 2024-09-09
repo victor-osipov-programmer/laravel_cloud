@@ -3,6 +3,7 @@
 use App\Exceptions\Forbidden;
 use App\Exceptions\GeneralError;
 use App\Exceptions\NotFound;
+use App\Http\Middleware\AuthMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-    
+        $middleware->api(append: AuthMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(fn() => true);
@@ -28,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return response([
                 "success" => false,
                 "message" => $e->errors()
-            ]);
+            ], 422);
         });
         $exceptions->render(function (NotFoundHttpException $e) {
             throw new NotFound();

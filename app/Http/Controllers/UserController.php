@@ -27,8 +27,11 @@ class UserController extends Controller
 
         // dd($data);
         $user = User::create($data);
-
         $token = Auth::login($user);
+
+        $user->update([
+            'token' => $token
+        ]);
 
         return response([
             'success' => true,
