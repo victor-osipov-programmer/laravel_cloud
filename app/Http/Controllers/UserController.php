@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use Illuminate\Support\Facades\Auth;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -21,7 +23,18 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request)
     {
-        //
+        $data = $request->validated();
+
+        // dd($data);
+        $user = User::create($data);
+
+        $token = Auth::login($user);
+
+        return response([
+            'success' => true,
+            'message' => 'Success',
+            'token' => $token
+        ]);
     }
 
     /**
