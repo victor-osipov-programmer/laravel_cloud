@@ -19,7 +19,7 @@ class AuthMiddleware
     {
         $user = Auth::user();
 
-        if (isset($user->token) && $user->token != request()->bearerToken()) {
+        if (!isset($user->token) || $user->token != request()->bearerToken()) {
             throw new LoginFailed();
         }
 
