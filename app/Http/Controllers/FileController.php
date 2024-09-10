@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateFileRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class FileController extends Controller
 {
@@ -24,36 +25,60 @@ class FileController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validateWithBag('post', [
-            'files' => 'required|array',
-            'files.*' => 'file|mimes:doc,pdf,docx,zip,jpeg,jpg,png|max:2048',
-        ]);
-        
-        $files = $request->file('files');
-
-        $uploaded_files = [];
-
-        foreach ($files as $file) {
-            $path = $file->store();
-
-            $new_file = File::create([
-                'id' => Str::random(10),
-                'name' => $file->getClientOriginalName(),
-                'url' => Storage::url($path)
+        try {
+            $request->validate([
+                'files' => 'required|array',
+                'files.*' => 'file|mimes:doc,pdf,docx,zip,jpeg,jpg,png|max:2048',
             ]);
-            $uploaded_files[] = $new_file;
+        } catch (ValidationException $e) {
+            
         }
 
-        return response(array_map(function ($file) {
-            return [
-                'success' => true,
-                'message' => 'Success',
-                'name' => $file->name,
-                'url' => $file->url,
-                'file_id' => $file->id
-            ];
-        }, $uploaded_files));
-        // File::create()
+        $response = [];
+        $files = $request->file('files');
+        
+        foreach ($files as $file) {
+            if ($file->isValid()) {
+                $file->store();
+
+                $file_id = Str::random(10);
+                while (File::where('id', $file_id)->exists()) {
+                    $file_id = Str::random(10);
+                }
+
+                $file_original_name = mb_strstr($file->getClientOriginalName(), '.', true);
+                $file_extension = $file->extension();
+                $file_name = $file_original_name . '.' . $file_extension;
+                $file_number = 1;
+
+                while (File::where('name', $file_name)->exists()) {
+                    $file_name = "$file_original_name ($file_number).$file_extension";
+                    $file_number += 1;
+                }
+
+                $new_file = File::create([
+                    'id' => $file_id,
+                    'name' => $file_name,
+                    'url' => url('/files/' . $file_id)
+                ]);
+
+                $response[] = [
+                    'success' => true,
+                    'message' => 'Success',
+                    'name' => $new_file->name,
+                    'url' => $new_file->url,
+                    'file_id' => $new_file->id
+                ];
+            } else {
+                $response[] = [
+                    'success' => false,
+                    'message' => 'File not loaded',
+                    'name' => $file->getClientOriginalName(),
+                ];
+            }
+        }
+
+        return response($response);
     }
 
     /**

@@ -10,4 +10,6 @@ class File extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    public $incrementing = false;
 }
