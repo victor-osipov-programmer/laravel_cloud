@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class UpdateFileRequest extends FormRequest
@@ -26,7 +28,7 @@ class UpdateFileRequest extends FormRequest
         return [
             'name' => [
                 'required',
-                Rule::unique('files')->where('author_id', '!=', 1)
+                Rule::unique('files')->where(fn(Builder $query) => $query->where('author_id', Auth::user()->id))
             ]
         ];
     }

@@ -40,19 +40,19 @@ class FileController extends Controller
         
         foreach ($files as $file) {
             if ($file->isValid()) {
-                $file->store();
-
                 $file_id = Str::random(10);
                 while (File::where('id', $file_id)->exists()) {
                     $file_id = Str::random(10);
                 }
+
+                $file->storeAs(null, $file_id);
 
                 $file_original_name = mb_strstr($file->getClientOriginalName(), '.', true);
                 $file_extension = $file->extension();
                 $file_full_name = $file_original_name . '.' . $file_extension;
                 $file_number = 1;
 
-                while (File::where('name', $file_full_name)->exists()) {
+                while (File::where('author_id', Auth::user()->id)->where('name', $file_full_name)->exists()) {
                     $file_full_name = "$file_original_name ($file_number).$file_extension";
                     $file_number += 1;
                 }

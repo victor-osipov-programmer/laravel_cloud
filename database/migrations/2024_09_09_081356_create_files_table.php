@@ -15,7 +15,10 @@ return new class extends Migration
             $table->string('id', 10)->primary();
             $table->string('name');
             $table->string('url');
+            $table->unsignedBigInteger('author_id');
             $table->timestamps();
+            
+            $table->foreign('author_id', 'foreign_author_id')->on('users')->references('id');
         });
     }
 
