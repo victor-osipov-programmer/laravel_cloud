@@ -12,4 +12,13 @@ class File extends Model
     protected $guarded = [];
 
     public $incrementing = false;
+
+
+    function users() {
+        return $this->belongsToMany(User::class, 'accesses');
+    }
+
+    function author() {
+        return $this->belongsTo(User::class);
+    }
 }

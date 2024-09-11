@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Forbidden;
+use App\Http\Requests\AccessFileRequest;
 use App\Models\File;
 use App\Http\Requests\StoreFileRequest;
 use App\Http\Requests\UpdateFileRequest;
+use App\Http\Resources\FileAccessesResource;
+use App\Http\Resources\FileResource;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -63,6 +68,7 @@ class FileController extends Controller
                     'url' => url('files/' . $file_id),
                     'author_id' => Auth::user()->id
                 ]);
+                $new_file->users()->attach(Auth::user());
 
                 $response[] = [
                     'success' => true,
@@ -88,7 +94,7 @@ class FileController extends Controller
      */
     public function show(File $file)
     {
-        
+        return Storage::download($file->id, $file->name);
     }
 
     /**
@@ -112,6 +118,35 @@ class FileController extends Controller
      */
     public function destroy(File $file)
     {
-        //
+        Storage::delete($file->id);
+        $file->users()->detach();
+        $file->delete();
+
+        return response([
+            'success' => true,
+            'message' => 'File already deleted'
+        ]);
+    }
+
+    function addAccess(Request $request, File $file) {
+        $data = $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ]);
+        $new_user = User::where('email', $data['email'])->first();
+        if ($file->author_id == $new_user->id) {
+            throw new Forbidden('Вы и так владелец файла');
+        }
+        // dump($file->users);
+        if ($file->users->contains($new_user)) {
+            throw new Forbidden('Этот пользователь уже добавлен');
+        }
+
+        $file->users()->attach($new_user);
+
+        // return $file->users;
+
+        // $file->fresh('users');
+        $file->load('users');
+        return FileAccessesResource::collection($file->users);
     }
 }

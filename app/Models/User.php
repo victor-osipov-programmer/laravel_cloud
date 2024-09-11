@@ -50,4 +50,9 @@ class User extends Authenticatable implements JWTSubject
     function getJWTCustomClaims() {
         return [];
     }
+
+
+    function files() {
+        return $this->belongsToMany(File::class, 'accesses');
+    }
 }

@@ -16,4 +16,7 @@ Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::post('/files', [FileController::class, 'store'])->can('create', File::class);
     Route::patch('/files/{file}', [FileController::class, 'update'])->can('update', 'file');
+    Route::delete('/files/{file}', [FileController::class, 'destroy'])->can('delete', 'file');
+    Route::get('/files/{file}', [FileController::class, 'show'])->can('view', 'file');
+    Route::post('/files/{file}/accesses', [FileController::class, 'addAccess'])->can('addAccess', 'file');
 });

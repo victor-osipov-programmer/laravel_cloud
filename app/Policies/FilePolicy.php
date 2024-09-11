@@ -63,4 +63,9 @@ class FilePolicy
     {
         //
     }
+
+    public function addAccess(User $user, File $file): bool
+    {
+        return $file->author_id == $user->id;
+    }
 }
