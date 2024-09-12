@@ -21,7 +21,7 @@ class FilePolicy
      */
     public function view(User $user, File $file): bool
     {
-        return $file->author_id == $user->id;
+        return $file->author_id == $user->id || $user->files->contains($file);
     }
 
     /**
@@ -62,10 +62,5 @@ class FilePolicy
     public function forceDelete(User $user, File $file): bool
     {
         //
-    }
-
-    public function addAccess(User $user, File $file): bool
-    {
-        return $file->author_id == $user->id;
     }
 }

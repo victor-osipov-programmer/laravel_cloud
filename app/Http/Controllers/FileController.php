@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Forbidden;
+use App\Exceptions\NotFound;
 use App\Http\Requests\AccessFileRequest;
 use App\Models\File;
 use App\Http\Requests\StoreFileRequest;
@@ -23,7 +24,9 @@ class FileController extends Controller
      */
     public function index()
     {
-        //
+        $files = Auth::user()->files;
+
+        return FileResource::collection($files);
     }
 
     /**
@@ -132,21 +135,46 @@ class FileController extends Controller
         $data = $request->validate([
             'email' => 'required|email|exists:users,email'
         ]);
+
         $new_user = User::where('email', $data['email'])->first();
         if ($file->author_id == $new_user->id) {
             throw new Forbidden('Вы и так владелец файла');
         }
-        // dump($file->users);
         if ($file->users->contains($new_user)) {
             throw new Forbidden('Этот пользователь уже добавлен');
         }
 
         $file->users()->attach($new_user);
-
-        // return $file->users;
-
-        // $file->fresh('users');
         $file->load('users');
+
         return FileAccessesResource::collection($file->users);
+    }
+    function deleteAccess(Request $request, File $file) {
+        $data = $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ]);
+
+        $deleted_user = User::where('email', $data['email'])->first();
+        if ($file->author_id == $deleted_user->id) {
+            throw new Forbidden();
+        }
+        if (!$file->users->contains($deleted_user)) {
+            throw new NotFound();
+        }
+
+        $file->users()->detach($deleted_user);
+        $file->load('users');
+
+        return FileAccessesResource::collection($file->users);
+    }
+
+    function accesses() {
+        $user = Auth::user();
+
+        return $user->files->filter(fn ($file) => $file->pivot->user_id != $file->author_id)->map(fn ($file) => [
+            'file_id' => $file->id,
+            'name' => $file->name,
+            'url' => $file->url
+        ]);
     }
 }
