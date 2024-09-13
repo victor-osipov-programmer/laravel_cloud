@@ -48,13 +48,6 @@ class FileController extends Controller
         
         foreach ($files as $file) {
             if ($file->isValid()) {
-                $file_id = Str::random(10);
-                while (File::where('id', $file_id)->exists()) {
-                    $file_id = Str::random(10);
-                }
-
-                $file->storeAs(null, $file_id);
-
                 $file_original_name = mb_strstr($file->getClientOriginalName(), '.', true);
                 $file_extension = $file->extension();
                 $file_full_name = $file_original_name . '.' . $file_extension;
@@ -65,10 +58,12 @@ class FileController extends Controller
                     $file_number += 1;
                 }
 
+                $new_file_id = File::genId();
+                $file->storeAs(null, $new_file_id);
                 $new_file = File::create([
-                    'id' => $file_id,
+                    'id' => $new_file_id,
                     'name' => $file_full_name,
-                    'url' => url('files/' . $file_id),
+                    'url' => url('files/' . $new_file_id),
                     'author_id' => Auth::user()->id
                 ]);
                 $new_file->users()->attach(Auth::user());
