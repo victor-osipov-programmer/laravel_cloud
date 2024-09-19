@@ -24,7 +24,8 @@ class FileController extends Controller
      */
     public function index()
     {
-        $files = Auth::user()->files;
+        $user = Auth::user();
+        $files = $user->files->filter(fn ($file) => $file->author_id == $user->id);
 
         return FileResource::collection($files);
     }
